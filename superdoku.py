@@ -15,7 +15,7 @@ class Grid(object):
     self.size = self.table.shape[0]
     self.primary = int(np.sqrt(self.size))
     assert self.primary == np.sqrt(self.size),"Invalid size"
-    self.invalid = [[[] for i in range(self.size)] for i in range(self.size)]
+    self.check_validity()
 
   def subzone(self,y,x):
     b = (y//self.primary)*self.primary
@@ -28,19 +28,16 @@ class Grid(object):
     r = list(self.choices)
     for i in self.table[y,:]:
       try:
-        #print("R",i)
         r.remove(i)
       except ValueError:
         pass
     for i in self.table[:,x]:
       try:
-        #print("C",i)
         r.remove(i)
       except ValueError:
         pass
     for i in self.subzone(y,x).flatten():
       try:
-        #print("S",i)
         r.remove(i)
       except ValueError:
         pass
@@ -62,6 +59,17 @@ class Grid(object):
         self.table[j,i] = v[0]
         left[j,i] = False
     return (old != left).any()
+
+  def check_validity(self):
+    for i in range(self.size):
+      l = self.table[i,:][self.table[i,:]!=self.empty]
+      assert len(set(l)) == len(l),"Invalid grid"
+      l = self.table[:,i][self.table[:,i]!=self.empty]
+      assert len(set(l)) == len(l),"Invalid grid"
+      for j in range(self.size):
+        sub = self.subzone(j*self.size,i*self.size)
+        l = sub[sub != self.empty]
+        assert len(set(l)) == len(l),"Invalid grid"
 
   def iter_fill(self):
     while self.fill():
@@ -90,11 +98,6 @@ class Grid(object):
 
 # ==============
 
-
-def solve_arr(arr,choices=list(range(1,10)),empty=0):
-  g = Grid(arr,choices,empty)
-  return solve(g).table
-
 def solve(g):
   g.iter_fill()
   if g.solved():
@@ -111,3 +114,7 @@ def solve(g):
       if r.solved():
         return r
   raise UnsolvableError
+
+def solve_arr(arr,choices=list(range(1,10)),empty=0):
+  g = Grid(arr,choices,empty)
+  return solve(g).table

@@ -69,3 +69,45 @@ class Grid(object):
 
   def solved(self):
     return not self.empty in self.table
+
+  def get_hypothesis(self):
+    lowest = len(self.choices)+1
+    for i in range(self.size):
+      for j in range(self.size):
+        if not self.table[j,i] == self.empty:
+          continue
+        v = self.get_values(j,i)
+        if v == 0:
+          continue
+        if len(v) < lowest:
+          lowest = len(v)
+          y,x = j,i
+        if len(v) == 2:
+          return j,i
+    if lowest == len(self.choices)+1:
+      raise UnsolvableError
+    return y,x
+
+# ==============
+
+
+def solve_arr(arr,choices=list(range(1,10)),empty=0):
+  g = Grid(arr,choices,empty)
+  return solve(g).table
+
+def solve(g):
+  g.iter_fill()
+  if g.solved():
+    return g
+  y,x = g.get_hypothesis()
+  for v in g.get_values(y,x):
+    new_a = g.table.copy()
+    new_a[y,x] = v
+    try:
+      r = solve(Grid(new_a,g.choices,g.empty))
+    except UnsolvableError:
+      pass
+    else:
+      if r.solved():
+        return r
+  raise UnsolvableError
